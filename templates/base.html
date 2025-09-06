@@ -2,16 +2,55 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Peso di Luna</title>
+    <title>Luna - Monitoraggio Peso</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: #f9f9f9;
+        }
+        nav {
+            background-color: #f2c2c2;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        nav a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+        h1, h2 {
+            font-family: "Comic Sans MS", cursive, sans-serif;
+            color: #444;
+        }
+        .container {
+            margin-top: 30px;
+        }
+        button {
+            padding: 8px 16px;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .back-home {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <nav>
         <a href="{{ url_for('home') }}">Home</a>
         <a href="{{ url_for('grafico') }}">Grafico</a>
     </nav>
-    <div class="content">
-        {% block content %}{% endblock %}
+    <div class="container">
+        {% block content %}
+        {% endblock %}
     </div>
 </body>
 </html>
+
