@@ -1,68 +1,73 @@
 {% extends "base.html" %}
 {% block content %}
-    <h2>Grafico di crescita</h2>
-    <canvas id="growthChart" width="400" height="200"></canvas>
+<h2>Grafico di crescita</h2>
+<p class="info">La linea blu mostra il peso inserito, le linee verde e rossa indicano rispettivamente i valori minimi e massimi previsti.</p>
 
-    <div class="back-home">
-        <a href="{{ url_for('home') }}">
-            <button type="button">🏠 Torna alla Home</button>
-        </a>
-    </div>
+<canvas id="growthChart"></canvas>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const labels = {{ labels|tojson }};
-        const pesi = {{ pesi|tojson }};
-        const min_range = {{ min_range|tojson }};
-        const max_range = {{ max_range|tojson }};
+<div class="back-home">
+    <a href="{{ url_for('home') }}">
+        <button type="button">🏠 Torna alla Home</button>
+    </a>
+</div>
 
-        const ctx = document.getElementById('growthChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Peso di Luna',
-                        data: pesi,
-                        borderColor: 'blue',
-                        fill: false,
-                        tension: 0.2
-                    },
-                    {
-                        label: 'Minimo',
-                        data: min_range,
-                        borderColor: 'green',
-                        borderDash: [5,5],
-                        fill: false,
-                        tension: 0.2
-                    },
-                    {
-                        label: 'Massimo',
-                        data: max_range,
-                        borderColor: 'red',
-                        borderDash: [5,5],
-                        fill: false,
-                        tension: 0.2
-                    }
-                ]
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const labels = {{ labels|tojson }};
+const pesi = {{ pesi|tojson }};
+const min_range = {{ min_range|tojson }};
+const max_range = {{ max_range|tojson }};
+
+const ctx = document.getElementById('growthChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: 'Peso di Luna',
+                data: pesi,
+                borderColor: 'blue',
+                fill: false,
+                tension: 0.2
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: false
-                    }
-                }
+            {
+                label: 'Minimo',
+                data: min_range,
+                borderColor: 'green',
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.2
+            },
+            {
+                label: 'Massimo',
+                data: max_range,
+                borderColor: 'red',
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.2
             }
-        });
-    </script>
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: false,
+                suggestedMin: Math.min(...min_range) - 0.5,
+                suggestedMax: Math.max(...max_range) + 0.5
+            }
+        }
+    }
+});
+</script>
 {% endblock %}
+
 
 
 
