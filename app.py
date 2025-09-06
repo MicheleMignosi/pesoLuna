@@ -2,9 +2,9 @@ from datetime import datetime
 import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for
+import traceback
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-
 DB_FILE = "luna.db"
 DATA_NASCITA = datetime.strptime("2023-01-01", "%Y-%m-%d")  # modifica con la data reale di Luna
 
@@ -61,52 +61,64 @@ def home():
 
 @app.route("/inserisci", methods=["POST"])
 def inserisci():
-    peso = float(request.form["peso"])
-    data = datetime.now().strftime("%Y-%m-%d")
-
-    conn = get_db_connection()
-    conn.execute("""
-        INSERT INTO misurazioni (data, peso)
-        VALUES (?, ?)
-        ON CONFLICT(data) DO UPDATE SET peso=excluded.peso
-    """, (data, peso))
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for("grafico"))
+    try:
+        peso = float(request.form["peso"])
+        data = datetime.now().strftime("%Y-%m-%d")
+        conn = get_db_connection()
+        conn.execute("""
+            INSERT INTO misurazioni (data, peso)
+            VALUES (?, ?)
+            ON CONFLICT(data) DO UPDATE SET peso=excluded.peso
+        """, (data, peso))
+        conn.commit()
+        conn.close()
+        return redirect(url_for("grafico"))
+    except Exception as e:
+        print(f"Errore in inserisci: {e}")
+        traceback.print_exc()
+        return f"Errore: {e}", 500
 
 @app.route("/grafico")
 def grafico():
-    conn = get_db_connection()
-    rows = conn.execute("SELECT data, peso FROM misurazioni ORDER BY data").fetchall()
-    conn.close()
-
-    labels = [row["data"] for row in rows]
-    pesi = [row["peso"] for row in rows]
-
-    min_range = []
-    max_range = []
-
-    for row in rows:
-        data_mis = datetime.strptime(row["data"], "%Y-%m-%d")
-        settimane = (data_mis - DATA_NASCITA).days // 7
-        if settimane in CRESCITA:
-            minimo, massimo = CRESCITA[settimane]
-        else:
-            minimo, massimo = (None, None)
-        min_range.append(minimo)
-        max_range.append(massimo)
-
-    return render_template("grafico.html",
-                           labels=labels,
-                           pesi=pesi,
-                           min_range=min_range,
-                           max_range=max_range)
+    try:
+        conn = get_db_connection()
+        rows = conn.execute("SELECT data, peso FROM misurazioni ORDER BY data").fetchall()
+        conn.close()
+        
+        labels = [row["data"] for row in rows]
+        pesi = [row["peso"] for row in rows]
+        min_range = []
+        max_range = []
+        
+        for row in rows:
+            try:
+                data_mis = datetime.strptime(row["data"], "%Y-%m-%d")
+                settimane = (data_mis - DATA_NASCITA).days // 7
+                if settimane in CRESCITA:
+                    minimo, massimo = CRESCITA[settimane]
+                else:
+                    minimo, massimo = (None, None)
+                min_range.append(minimo)
+                max_range.append(massimo)
+            except Exception as e:
+                print(f"Errore nel calcolo settimane per {row['data']}: {e}")
+                min_range.append(None)
+                max_range.append(None)
+        
+        return render_template("grafico.html",
+                               labels=labels,
+                               pesi=pesi,
+                               min_range=min_range,
+                               max_range=max_range)
+    except Exception as e:
+        print(f"Errore in grafico: {e}")
+        traceback.print_exc()
+        return f"Errore nel caricamento del grafico: {e}", 500
 
 # -------------------------
 # Avvio Flask
 # -------------------------
-if __name__ == "__main__":
+if __name__ == "__main__":  # CORRETTO: era **name**
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
 
