@@ -52,14 +52,14 @@ def grafico():
     max_range = []
 
     for row in rows:
-    data_mis = datetime.strptime(row["data"], "%Y-%m-%d")
-    settimane = (data_mis - DATA_NASCITA).days // 7
-    if settimane in CRESCITA:
-        minimo, massimo = CRESCITA[settimane]
-    else:
-        minimo, massimo = (None, None)
-    min_range.append(minimo)
-    max_range.append(massimo)
+        data_mis = datetime.strptime(row["data"], "%Y-%m-%d")
+        settimane = (data_mis - DATA_NASCITA).days // 7
+        if settimane in CRESCITA:
+            minimo, massimo = CRESCITA[settimane]
+        else:
+            minimo, massimo = (None, None)
+        min_range.append(minimo)
+        max_range.append(massimo)
 
     return render_template("grafico.html",
                            labels=labels,
