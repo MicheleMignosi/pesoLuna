@@ -9,7 +9,7 @@ from google.oauth2.service_account import Credentials
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 DB_FILE = "luna.db"
-DATA_NASCITA = datetime.strptime("2023-08-25", "%Y-%m-%d")  # data reale di nascita
+DATA_NASCITA = datetime.strptime("2025-08-25", "%Y-%m-%d")  # data reale di nascita
 
 # Minimi e massimi peso per settimana
 CRESCITA = {
@@ -58,9 +58,9 @@ def init_db():
         """)
         # Misurazioni iniziali
         iniziali = [
-            ("2023-08-25", 3.55),
-            ("2023-08-30", 3.45),
-            ("2023-09-02", 3.50)
+            ("2025-08-25", 3.55),
+            ("2025-08-30", 3.45),
+            ("2025-09-02", 3.50)
         ]
         conn.executemany("INSERT INTO misurazioni (data, peso) VALUES (?, ?)", iniziali)
         conn.commit()
@@ -94,7 +94,7 @@ def inserisci():
     # 🔹 Backup su Google Sheets
     try:
         sh = gc.open_by_key(SHEET_ID)
-        worksheet = sh.sheet1
+        worksheet = sh.Foglio1
         worksheet.append_row([data, peso])
     except Exception as e:
         print("Errore scrittura Google Sheets:", e)
