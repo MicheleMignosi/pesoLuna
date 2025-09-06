@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 DB_FILE = "luna.db"
-DATA_NASCITA = datetime.strptime("2023-08-25", "%Y-%m-%d")  # data reale di nascita di Luna
+DATA_NASCITA = datetime.strptime("2023-08-25", "%Y-%m-%d")  # data reale di nascita
 
 # Minimi e massimi peso per settimana
 CRESCITA = {
@@ -81,27 +81,31 @@ def grafico():
     rows = conn.execute("SELECT data, peso FROM misurazioni ORDER BY data").fetchall()
     conn.close()
 
-    labels = [row["data"] for row in rows]
-    pesi = [row["peso"] for row in rows]
-
+    labels = []
+    pesi = []
     min_range = []
     max_range = []
 
     for row in rows:
         data_mis = datetime.strptime(row["data"], "%Y-%m-%d")
-        settimane = (data_mis - DATA_NASCITA).days // 7
+        settimana = (data_mis - DATA_NASCITA).days // 7
 
-        # Se settimana presente in CRESCITA usa i valori, altrimenti None
-        if settimane in CRESCITA:
-            minimo, massimo = CRESCITA[settimane]
+        # Formatta data in italiano
+        labels.append(data_mis.strftime("%d/%m/%Y"))
+        pesi.append(row["peso"])
+
+        # Valori min/max per la settimana della rilevazione
+        if settimana in CRESCITA:
+            minimo, massimo = CRESCITA[settimana]
         else:
-            minimo, massimo = None, None  # Chart.js ignorerà il punto
+            # Se settimana > max, usa ultima settimana disponibile
+            ultimo_sett = max(CRESCITA.keys())
+            minimo, massimo = CRESCITA[ultimo_sett]
 
-        # Assicurati che siano float o None
-        min_range.append(float(minimo) if minimo is not None else None)
-        max_range.append(float(massimo) if massimo is not None else None)
+        min_range.append(float(minimo))
+        max_range.append(float(massimo))
 
-    # DEBUG: stampa valori per verificare
+    # DEBUG
     print("labels:", labels)
     print("pesi:", pesi)
     print("min_range:", min_range)
