@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 DB_FILE = "luna.db"
-DATA_NASCITA = datetime.strptime("2025-08-25", "%Y-%m-%d")
+DATA_NASCITA = datetime.strptime("2023-08-25", "%Y-%m-%d")  # data reale di nascita di Luna
 
 # Minimi e massimi peso per settimana
 CRESCITA = {
@@ -91,16 +91,15 @@ def grafico():
         data_mis = datetime.strptime(row["data"], "%Y-%m-%d")
         settimane = (data_mis - DATA_NASCITA).days // 7
 
-        # Se settimana presente in CRESCITA usa i valori, altrimenti usa ultima settimana disponibile
+        # Se settimana presente in CRESCITA usa i valori, altrimenti None
         if settimane in CRESCITA:
             minimo, massimo = CRESCITA[settimane]
         else:
-            ultimo_sett = max(CRESCITA.keys())
-            minimo, massimo = CRESCITA[ultimo_sett]
+            minimo, massimo = None, None  # Chart.js ignorerà il punto
 
-        # Assicurati che siano float
-        min_range.append(float(minimo))
-        max_range.append(float(massimo))
+        # Assicurati che siano float o None
+        min_range.append(float(minimo) if minimo is not None else None)
+        max_range.append(float(massimo) if massimo is not None else None)
 
     # DEBUG: stampa valori per verificare
     print("labels:", labels)
@@ -120,6 +119,7 @@ def grafico():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
