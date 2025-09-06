@@ -90,12 +90,23 @@ def grafico():
     for row in rows:
         data_mis = datetime.strptime(row["data"], "%Y-%m-%d")
         settimane = (data_mis - DATA_NASCITA).days // 7
+
+        # Se settimana presente in CRESCITA usa i valori, altrimenti usa ultima settimana disponibile
         if settimane in CRESCITA:
             minimo, massimo = CRESCITA[settimane]
         else:
-            minimo, massimo = (None, None)
-        min_range.append(minimo)
-        max_range.append(massimo)
+            ultimo_sett = max(CRESCITA.keys())
+            minimo, massimo = CRESCITA[ultimo_sett]
+
+        # Assicurati che siano float
+        min_range.append(float(minimo))
+        max_range.append(float(massimo))
+
+    # DEBUG: stampa valori per verificare
+    print("labels:", labels)
+    print("pesi:", pesi)
+    print("min_range:", min_range)
+    print("max_range:", max_range)
 
     return render_template("grafico.html",
                            labels=labels,
@@ -109,6 +120,7 @@ def grafico():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
