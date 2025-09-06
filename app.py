@@ -1,14 +1,16 @@
-from datetime import datetime
 import os
+import json
 import sqlite3
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for
+import gspread
+from google.oauth2.service_account import Credentials
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 DB_FILE = "luna.db"
-DATA_NASCITA = datetime.strptime("2025-08-25", "%Y-%m-%d")  
+DATA_NASCITA = datetime.strptime("2023-08-25", "%Y-%m-%d")  # data vera di nascita
 
-# Minimi e massimi peso per settimana
 CRESCITA = {
     0: (2.5, 4.5), 1: (2.7, 4.8), 2: (2.9, 5.0), 3: (3.1, 5.3),
     4: (3.3, 5.6), 5: (3.6, 5.9), 6: (3.8, 6.2), 7: (4.0, 6.5),
@@ -19,51 +21,37 @@ CRESCITA = {
     24: (7.5, 10.0)
 }
 
-# -------------------------
-# Funzioni di utilità
-# -------------------------
+# Google Sheets API via Secret
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+google_creds = os.getenv("GOOGLE_CREDENTIALS")
+if google_creds is None:
+    raise RuntimeError("⚠️ Variabile GOOGLE_CREDENTIALS non trovata su Render!")
+
+info = json.loads(google_creds)
+CREDS = Credentials.from_service_account_info(info, scopes=SCOPES)
+gc = gspread.authorize(CREDS)
+SHEET_ID = "1twt_TcE9Tkmg0g2ypDBDwqYVL89x1YcW88t3phUzOFs"
+sh = gc.open_by_key(SHEET_ID)
+worksheet = sh.sheet1
+
+
 def get_db_connection():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     return conn
 
-def init_db():
-    """Crea il DB se non esiste e inserisce dati iniziali"""
-    if not os.path.exists(DB_FILE):
-        conn = sqlite3.connect(DB_FILE)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS misurazioni (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                data TEXT NOT NULL UNIQUE,
-                peso REAL NOT NULL
-            )
-        """)
-        # Misurazioni iniziali
-        iniziali = [
-            ("2025-08-25", 3.55),
-            ("2025-08-30", 3.45),
-            ("2025-09-02", 3.50)
-        ]
-        conn.executemany("INSERT INTO misurazioni (data, peso) VALUES (?, ?)", iniziali)
-        conn.commit()
-        conn.close()
-        print("Database creato con dati iniziali!")
 
-# Inizializza DB all'avvio
-init_db()
-
-# -------------------------
-# Rotte Flask
-# -------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
+
 
 @app.route("/inserisci", methods=["POST"])
 def inserisci():
     peso = float(request.form["peso"])
     data = datetime.now().strftime("%Y-%m-%d")
 
+    # Salva su SQLite
     conn = get_db_connection()
     conn.execute("""
         INSERT INTO misurazioni (data, peso)
@@ -73,7 +61,11 @@ def inserisci():
     conn.commit()
     conn.close()
 
+    # Backup automatico su Google Sheets
+    worksheet.append_row([data, peso])
+
     return redirect(url_for("grafico"))
+
 
 @app.route("/grafico")
 def grafico():
@@ -81,49 +73,32 @@ def grafico():
     rows = conn.execute("SELECT data, peso FROM misurazioni ORDER BY data").fetchall()
     conn.close()
 
-    labels = []
-    pesi = []
-    min_range = []
-    max_range = []
+    labels = [datetime.strptime(row["data"], "%Y-%m-%d").strftime("%d/%m/%Y") for row in rows]
+    pesi = [row["peso"] for row in rows]
 
+    min_range, max_range = [], []
     for row in rows:
         data_mis = datetime.strptime(row["data"], "%Y-%m-%d")
-        settimana = (data_mis - DATA_NASCITA).days // 7
-
-        # Formatta data in italiano
-        labels.append(data_mis.strftime("%d/%m/%Y"))
-        pesi.append(row["peso"])
-
-        # Valori min/max per la settimana della rilevazione
-        if settimana in CRESCITA:
-            minimo, massimo = CRESCITA[settimana]
+        settimane = (data_mis - DATA_NASCITA).days // 7
+        if settimane in CRESCITA:
+            minimo, massimo = CRESCITA[settimane]
         else:
-            # Se settimana > max, usa ultima settimana disponibile
             ultimo_sett = max(CRESCITA.keys())
             minimo, massimo = CRESCITA[ultimo_sett]
-
         min_range.append(float(minimo))
         max_range.append(float(massimo))
 
-    # DEBUG
-    print("labels:", labels)
-    print("pesi:", pesi)
-    print("min_range:", min_range)
-    print("max_range:", max_range)
+    return render_template(
+        "grafico.html",
+        labels=labels,
+        pesi=pesi,
+        min_range=min_range,
+        max_range=max_range
+    )
 
-    return render_template("grafico.html",
-                           labels=labels,
-                           pesi=pesi,
-                           min_range=min_range,
-                           max_range=max_range)
 
-# -------------------------
-# Avvio Flask
-# -------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
-
+    app.run(host="0.0.0.0", port=5000)
 
 
 
