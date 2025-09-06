@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Grafico di crescita</h2>
+    <canvas id="growthChart" width="400" height="200"></canvas>
+
+    <div class="back-home">
+        <a href="{{ url_for('home') }}">
+            <button type="button">🏠 Torna alla Home</button>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('growthChart').getContext('2d');
+        const growthChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ labels|tojson }},
+                datasets: [
+                    {
+                        label: 'Peso di Luna',
+                        data: {{ pesi|tojson }},
+                        borderColor: 'blue',
+                        fill: false
+                    },
+                    {
+                        label: 'Minimo',
+                        data: {{ min_range|tojson }},
+                        borderColor: 'green',
+                        borderDash: [5,5],
+                        fill: false
+                    },
+                    {
+                        label: 'Massimo',
+                        data: {{ max_range|tojson }},
+                        borderColor: 'red',
+                        borderDash: [5,5],
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}

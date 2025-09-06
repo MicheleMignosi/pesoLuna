@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1 class="welcome">Benvenuta Luna!</h1>
+    <form method="post" action="/inserisci">
+        <label for="peso">Inserisci misurazione:</label><br>
+        <input type="number" step="0.1" name="peso" id="peso" required>
+        <button type="submit">Salva</button>
+    </form>
+{% endblock %}
