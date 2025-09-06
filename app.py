@@ -8,7 +8,7 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 DB_FILE = "luna.db"
 DATA_NASCITA = datetime.strptime("2023-01-01", "%Y-%m-%d")  # modifica con la data reale di Luna
 
-# Valori min/max peso per settimana
+# Minimi e massimi peso per settimana
 CRESCITA = {
     0: (2.5, 4.5), 1: (2.7, 4.8), 2: (2.9, 5.0), 3: (3.1, 5.3),
     4: (3.3, 5.6), 5: (3.6, 5.9), 6: (3.8, 6.2), 7: (4.0, 6.5),
@@ -28,7 +28,7 @@ def get_db_connection():
     return conn
 
 def init_db():
-    """Crea il database se non esiste e imposta la colonna data unica"""
+    """Crea il DB se non esiste e inserisce dati iniziali"""
     if not os.path.exists(DB_FILE):
         conn = sqlite3.connect(DB_FILE)
         conn.execute("""
@@ -38,7 +38,7 @@ def init_db():
                 peso REAL NOT NULL
             )
         """)
-        # Inserimento dati iniziali
+        # Misurazioni iniziali
         iniziali = [
             ("2023-08-25", 3.55),
             ("2023-08-30", 3.45),
@@ -47,9 +47,9 @@ def init_db():
         conn.executemany("INSERT INTO misurazioni (data, peso) VALUES (?, ?)", iniziali)
         conn.commit()
         conn.close()
-        print("Database creato e popolato con dati iniziali!")
+        print("Database creato con dati iniziali!")
 
-# Inizializza il DB all'avvio
+# Inizializza DB all'avvio
 init_db()
 
 # -------------------------
@@ -107,8 +107,8 @@ def grafico():
 # Avvio Flask
 # -------------------------
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
