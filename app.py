@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 DB_FILE = "luna.db"
-DATA_NASCITA = datetime.strptime("2023-01-01", "%Y-%m-%d")  # modifica con la data reale di Luna
+DATA_NASCITA = datetime.strptime("2025-08-25", "%Y-%m-%d")
 
 # Minimi e massimi peso per settimana
 CRESCITA = {
