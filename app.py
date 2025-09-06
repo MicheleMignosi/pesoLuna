@@ -1,12 +1,14 @@
 from datetime import datetime
+import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 DB_FILE = "luna.db"
-DATA_NASCITA = datetime.strptime("2023-01-01", "%Y-%m-%d")  # modifica con la data vera di Luna
+DATA_NASCITA = datetime.strptime("2023-01-01", "%Y-%m-%d")  # modifica con la data reale di Luna
 
+# Valori min/max peso per settimana
 CRESCITA = {
     0: (2.5, 4.5), 1: (2.7, 4.8), 2: (2.9, 5.0), 3: (3.1, 5.3),
     4: (3.3, 5.6), 5: (3.6, 5.9), 6: (3.8, 6.2), 7: (4.0, 6.5),
@@ -17,12 +19,35 @@ CRESCITA = {
     24: (7.5, 10.0)
 }
 
-
+# -------------------------
+# Funzioni di utilità
+# -------------------------
 def get_db_connection():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     return conn
 
+def init_db():
+    """Crea il database se non esiste"""
+    if not os.path.exists(DB_FILE):
+        conn = sqlite3.connect(DB_FILE)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS misurazioni (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data TEXT NOT NULL,
+                peso REAL NOT NULL
+            )
+        """)
+        conn.commit()
+        conn.close()
+        print("Database creato correttamente!")
+
+# Inizializza il DB all'avvio
+init_db()
+
+# -------------------------
+# Rotte Flask
+# -------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -66,3 +91,12 @@ def grafico():
                            pesi=pesi,
                            min_range=min_range,
                            max_range=max_range)
+
+# -------------------------
+# Avvio Flask
+# -------------------------
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
+
