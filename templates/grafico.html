@@ -11,36 +11,49 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        const labels = {{ labels|tojson }};
+        const pesi = {{ pesi|tojson }};
+        const min_range = {{ min_range|tojson }};
+        const max_range = {{ max_range|tojson }};
+
         const ctx = document.getElementById('growthChart').getContext('2d');
-        const growthChart = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'line',
             data: {
-                labels: {{ labels|tojson }},
+                labels: labels,
                 datasets: [
                     {
                         label: 'Peso di Luna',
-                        data: {{ pesi|tojson }},
+                        data: pesi,
                         borderColor: 'blue',
-                        fill: false
+                        fill: false,
+                        tension: 0.2
                     },
                     {
                         label: 'Minimo',
-                        data: {{ min_range|tojson }},
+                        data: min_range,
                         borderColor: 'green',
                         borderDash: [5,5],
-                        fill: false
+                        fill: false,
+                        tension: 0.2
                     },
                     {
                         label: 'Massimo',
-                        data: {{ max_range|tojson }},
+                        data: max_range,
                         borderColor: 'red',
                         borderDash: [5,5],
-                        fill: false
+                        fill: false,
+                        tension: 0.2
                     }
                 ]
             },
             options: {
                 responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: false
@@ -50,3 +63,4 @@
         });
     </script>
 {% endblock %}
+
