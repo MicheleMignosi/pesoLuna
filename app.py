@@ -28,19 +28,26 @@ def get_db_connection():
     return conn
 
 def init_db():
-    """Crea il database se non esiste"""
+    """Crea il database se non esiste e imposta la colonna data unica"""
     if not os.path.exists(DB_FILE):
         conn = sqlite3.connect(DB_FILE)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS misurazioni (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                data TEXT NOT NULL,
+                data TEXT NOT NULL UNIQUE,
                 peso REAL NOT NULL
             )
         """)
+        # Inserimento dati iniziali
+        iniziali = [
+            ("2023-08-25", 3.55),
+            ("2023-08-30", 3.45),
+            ("2023-09-02", 3.50)
+        ]
+        conn.executemany("INSERT INTO misurazioni (data, peso) VALUES (?, ?)", iniziali)
         conn.commit()
         conn.close()
-        print("Database creato correttamente!")
+        print("Database creato e popolato con dati iniziali!")
 
 # Inizializza il DB all'avvio
 init_db()
@@ -58,7 +65,11 @@ def inserisci():
     data = datetime.now().strftime("%Y-%m-%d")
 
     conn = get_db_connection()
-    conn.execute("INSERT INTO misurazioni (data, peso) VALUES (?, ?)", (data, peso))
+    conn.execute("""
+        INSERT INTO misurazioni (data, peso)
+        VALUES (?, ?)
+        ON CONFLICT(data) DO UPDATE SET peso=excluded.peso
+    """, (data, peso))
     conn.commit()
     conn.close()
 
@@ -67,7 +78,7 @@ def inserisci():
 @app.route("/grafico")
 def grafico():
     conn = get_db_connection()
-    rows = conn.execute("SELECT data, peso FROM misurazioni ORDER BY id").fetchall()
+    rows = conn.execute("SELECT data, peso FROM misurazioni ORDER BY data").fetchall()
     conn.close()
 
     labels = [row["data"] for row in rows]
@@ -99,4 +110,5 @@ if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
