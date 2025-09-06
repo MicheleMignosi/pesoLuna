@@ -81,9 +81,21 @@ def inserisci():
 @app.route("/grafico")
 def grafico():
     try:
+        # Assicurati che il database sia inizializzato
+        init_db()
+        
         conn = get_db_connection()
         rows = conn.execute("SELECT data, peso FROM misurazioni ORDER BY data").fetchall()
         conn.close()
+        
+        if not rows:
+            # Se non ci sono dati, mostra un messaggio
+            return render_template("grafico.html",
+                                   labels=[],
+                                   pesi=[],
+                                   min_range=[],
+                                   max_range=[],
+                                   no_data=True)
         
         labels = [row["data"] for row in rows]
         pesi = [row["peso"] for row in rows]
@@ -109,7 +121,8 @@ def grafico():
                                labels=labels,
                                pesi=pesi,
                                min_range=min_range,
-                               max_range=max_range)
+                               max_range=max_range,
+                               no_data=False)
     except Exception as e:
         print(f"Errore in grafico: {e}")
         traceback.print_exc()
