@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
     <h1>Benvenuta Luna!</h1>
+    <p class="info">Il grafico contiene già alcune misurazioni iniziali.</p>
 
     <form action="{{ url_for('inserisci') }}" method="POST">
         <label for="peso">Inserisci misurazione (kg):</label><br>
@@ -9,3 +10,4 @@
         <button type="submit">Salva</button>
     </form>
 {% endblock %}
+
