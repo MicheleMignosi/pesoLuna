@@ -36,6 +36,7 @@ gc = gspread.authorize(CREDS)
 
 # Inserisci qui l'ID del tuo Google Sheet
 SHEET_ID = "TUO_SHEET_ID"
+SHEET_NAME = "Sheet1"  # Assicurati che questo sia il nome corretto del foglio
 
 # -------------------------
 # Funzioni di utilità
@@ -82,6 +83,7 @@ def inserisci():
     peso = float(request.form["peso"])
     data = datetime.now().strftime("%Y-%m-%d")
 
+    # Salva in SQLite
     conn = get_db_connection()
     conn.execute("""
         INSERT INTO misurazioni (data, peso)
@@ -91,13 +93,19 @@ def inserisci():
     conn.commit()
     conn.close()
 
-    # 🔹 Backup su Google Sheets
+    # 🔹 Backup su Google Sheets con debug dettagliato
     try:
+        print("Provo ad aprire il Google Sheet...")
         sh = gc.open_by_key(SHEET_ID)
-        worksheet = sh.Foglio1
+        worksheet = sh.worksheet(SHEET_NAME)
         worksheet.append_row([data, peso])
+        print(f"Riga scritta su Google Sheet: {data}, {peso}")
+    except gspread.SpreadsheetNotFound:
+        print(f"Errore: Google Sheet con ID '{SHEET_ID}' non trovato!")
+    except gspread.WorksheetNotFound:
+        print(f"Errore: Foglio '{SHEET_NAME}' non trovato nel Google Sheet!")
     except Exception as e:
-        print("Errore scrittura Google Sheets:", e)
+        print("Errore generico durante scrittura Google Sheets:", e)
 
     return redirect(url_for("grafico"))
 
@@ -142,6 +150,7 @@ def grafico():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
